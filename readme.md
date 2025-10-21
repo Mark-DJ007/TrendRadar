@@ -1,5 +1,3 @@
-> 预告：下一次更新是 v3.0.0 版本，主要是 **AI** 有关的各种分析新闻资讯的功能
-
 <div align="center" id="trendradar">
 
 <a href="https://github.com/sansan0/TrendRadar" title="TrendRadar">
@@ -13,7 +11,7 @@
 [![GitHub Stars](https://img.shields.io/github/stars/sansan0/TrendRadar?style=flat-square&logo=github&color=yellow)](https://github.com/sansan0/TrendRadar/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/sansan0/TrendRadar?style=flat-square&logo=github&color=blue)](https://github.com/sansan0/TrendRadar/network/members)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v2.4.4-green.svg?style=flat-square)](https://github.com/sansan0/TrendRadar)
+[![Version](https://img.shields.io/badge/version-v3.0.2-green.svg?style=flat-square)](https://github.com/sansan0/TrendRadar)
 
 [![企业微信通知](https://img.shields.io/badge/企业微信-通知-00D4AA?style=flat-square)](https://work.weixin.qq.com/)
 [![Telegram通知](https://img.shields.io/badge/Telegram-通知-00D4AA?style=flat-square)](https://telegram.org/)
@@ -22,16 +20,16 @@
 [![邮件通知](https://img.shields.io/badge/Email-通知-00D4AA?style=flat-square)](#) 
 [![ntfy通知](https://img.shields.io/badge/ntfy-通知-00D4AA?style=flat-square)](https://github.com/binwiederhier/ntfy)
 
+
 [![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-自动化-2088FF?style=flat-square&logo=github-actions&logoColor=white)](https://github.com/sansan0/TrendRadar)
 [![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-部署-4285F4?style=flat-square&logo=github&logoColor=white)](https://sansan0.github.io/TrendRadar)
 [![Docker](https://img.shields.io/badge/Docker-部署-2496ED?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/)
+[![MCP Support](https://img.shields.io/badge/MCP-AI分析支持-FF6B6B?style=flat-square&logo=ai&logoColor=white)](https://modelcontextprotocol.io/)
 
 </div>
 
 
-> 本项目以轻量，易部署为目标
->
-> 开源路上，感谢有你~😉
+> 本项目以轻量，易部署为目标。开源路上，感谢有你~😉
 
 - 感谢**耐心反馈 bug** 的贡献者,你们的每一条反馈让项目更加完善;  
 - 感谢**为项目点 star** 的观众们,你们的每一个 star 都是对开源精神最好的支持;  
@@ -39,7 +37,7 @@
 - 感谢**给予资金支持** 的朋友们,你们的慷慨已化身为键盘旁的零食饮料,陪伴着项目的每一次迭代。
 
 <details>
-<summary>👉 点击查看<strong>致谢名单</strong> (当前 <strong>🔥32🔥</strong> 位)</summary>
+<summary>👉 点击查看<strong>致谢名单</strong> (当前 <strong>🔥39🔥</strong> 位)</summary>
 
 ### 数据支持
 
@@ -59,6 +57,13 @@
 
 |           点赞人            |  金额  |  日期  |             备注             |
 | :-------------------------: | :----: | :----: | :-----------------------: |
+|           P*n           |  1  | 2025.10.20  |          |
+|           *杰           |  1  | 2025.10.19  |          |
+|           *徐           |  1  | 2025.10.18  |          |
+|           *志           |  1  | 2025.10.17  |          |
+|           *😀           |  10  | 2025.10.16  |     点赞     |
+|           **杰           |  10  | 2025.10.16  |          |
+|           *啸           |  10  | 2025.10.16  |          |
 |           *纪           |  5  | 2025.10.14  | TrendRadar         |
 |           J*d           |  1  | 2025.10.14  | 谢谢你的工具，很好玩...          |
 |           *H           |  1  | 2025.10.14  |           |
@@ -336,7 +341,7 @@ OPPO
 - **持续性分析**：区分一次性热点话题和持续发酵的深度新闻
 - **跨平台对比**：同一新闻在不同平台的排名表现，看出媒体关注度差异
 
-**实际效果**：不再错过重要新闻的完整发展过程，从话题萌芽到高峰热议，全程掌握
+> 不再错过重要新闻的完整发展过程，从话题萌芽到高峰热议，全程掌握
 
 <details>
 <summary><strong>👉 推送格式说明</strong></summary>
@@ -403,9 +408,7 @@ OPPO
 - **关注持续出现的话题**（占30%）：反复出现的新闻更重要  
 - **考虑排名质量**（占10%）：不仅多次出现，还经常排在前列
 
-**实际效果**：把分散在各个平台的热搜合并起来，按照你关心的热度重新排序
-
-> 这三个比例可以选择适合自己的场景进行调整
+> 把分散在各个平台的热搜合并起来，按照你关心的热度重新排序，这三个比例可以选择适合自己的场景进行调整
 
 <details>
 <summary><strong>👉 热点权重调整</strong></summary>
@@ -451,6 +454,21 @@ weight:
 - **Docker部署**：支持多架构容器化运行
 - **数据持久化**：HTML/TXT多格式历史记录保存
 
+
+### **AI 智能分析（v3.0.0 新增）**
+
+基于 MCP (Model Context Protocol) 协议的 AI 对话分析系统，让你用自然语言深度挖掘新闻数据
+
+- **对话式查询**：用自然语言提问，如"查询昨天知乎的热点"、"分析比特币最近的热度趋势"
+- **13 种分析工具**：涵盖基础查询、智能检索、趋势分析、数据洞察、情感分析等
+- **多客户端支持**：Cherry Studio（GUI 配置）、Claude Desktop、Cursor、Cline 等
+- **深度分析能力**：
+  - 话题趋势追踪（热度变化、生命周期、爆火检测、趋势预测）
+  - 跨平台数据对比（活跃度统计、关键词共现）
+  - 智能摘要生成、相似新闻查找、历史关联检索
+
+> 告别手动翻阅数据文件，AI 助手帮你秒懂新闻背后的故事
+
 ### **零技术门槛部署**
 
 GitHub 一键 Fork 即可使用，无需编程基础。
@@ -482,6 +500,35 @@ GitHub 一键 Fork 即可使用，无需编程基础。
 - **小版本更新**：从 v2.x 升级到 v2.y, 用本项目的 `main.py` 代码替换你 fork 仓库中的对应文件
 - **大版本升级**：从 v1.x 升级到 v2.y, 建议删除现有 fork 后重新 fork，这样更省力且避免配置冲突
 
+### 2025/10/21 - v3.0.2
+
+- **更新内容**：
+    - 必然修复 ntfy 推送编码问题
+
+### 2025/10/20 - v3.0.0
+
+**重大更新 - AI 分析功能上线** 🤖
+
+- **核心功能**：
+  - 新增基于 MCP (Model Context Protocol) 的 AI 分析服务器
+  - 支持13种智能分析工具：基础查询、智能检索、高级分析、系统管理
+  - 自然语言交互：通过对话方式查询和分析新闻数据
+  - 多客户端支持：Claude Desktop、Cherry Studio、Cursor、Cline 等
+
+- **分析能力**：
+  - 话题趋势分析（热度追踪、生命周期、爆火检测、趋势预测）
+  - 数据洞察（平台对比、活跃度统计、关键词共现）
+  - 情感分析、相似新闻查找、智能摘要生成
+  - 历史相关新闻检索、多模式搜索
+
+- **更新提示**：
+  - 这是独立的 AI 分析功能，不影响现有的推送功能
+  - 可选择性使用，无需升级现有部署
+
+
+<details>
+<summary><strong>👉 历史更新</strong></summary>
+
 ### 2025/10/15 - v2.4.4
 
 - **更新内容**：
@@ -490,10 +537,6 @@ GitHub 一键 Fork 即可使用，无需编程基础。
 
 - **更新提示**：
   - 建议【小版本升级】
-
-
-<details>
-<summary><strong>👉 历史更新</strong></summary>
 
 
 ### 2025/10/10 - v2.4.3
@@ -1236,12 +1279,43 @@ docker exec -it trend-radar ls -la /app/config/
 </details>
 
 
+## 🤖 AI 智能分析部署
+
+TrendRadar v3.0.0 新增了基于 **MCP (Model Context Protocol)** 的 AI 分析功能，让你可以通过自然语言与新闻数据对话，进行深度分析。
+
+### 快速部署
+
+Cherry Studio 提供 GUI 配置界面，可快速部署。
+
+**详细教程**：[README-Cherry-Studio.md](README-Cherry-Studio.md)
+
+
+### 与 AI 对话的姿势
+
+**基础查询**：
+```
+"给我看看最新的新闻"
+"查询昨天知乎的热点"
+"我关注的词今天出现了多少次"
+```
+
+**趋势分析**：
+```
+"分析'比特币'最近一周的热度趋势"
+"看看'iPhone'话题是昙花一现还是持续热点"
+```
+
+**详细教程**：[README-MCP-FAQ.md](README-MCP-FAQ.md)
+
+>如果还有配置部署方面的问题，后续我会根据反馈出个**图文教程**，届时会更新到我的公众号上
+
 ## ☕问题答疑与1元点赞
 
 > 心意到就行，收到的**点赞**用于提高开发者开源的积极性。**点赞**已收录于**致谢名单**
 
 - **GitHub Issues**：适合针对性强的解答。提问时请提供完整信息（截图、错误日志、系统环境等）。
-- **公众号交流**：适合快速咨询和使用疑问。可以在文章下留言或私信交流。
+- **公众号交流**：适合快速咨询。建议优先在相关文章下的公共留言区交流，如私信，请文明礼貌用语😉
+
 
 |公众号关注 |微信点赞 | 支付宝点赞 |
 |:---:|:---:|:---:| 
