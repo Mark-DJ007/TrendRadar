@@ -1,32 +1,35 @@
-	# 给这个定时任务起个名字
-	name: Trigger Coze Bot Workflow
-	# 什么时候触发这个任务
-	on:
-	  schedule:
-	    # 每小时的第0分钟运行一次
-	    - cron: '0 * * * *'
-	  # 允许手动在 Actions 页面点击运行，方便测试
-	  workflow_dispatch:
-	jobs:
-	  call-coze-api:
-	    runs-on: ubuntu-latest
-	    steps:
-	      - name: Run Coze Workflow via API
-	        env:
-	          # 从 GitHub Secrets 中读取凭证
-	          API_TOKEN: ${{ secrets.COZE_API_TOKEN }}
-	          WORKFLOW_ID: ${{ secrets.COZE_WORKFLOW_ID }}
-	          # 注意：这里改成了 BOT_ID
-	          BOT_ID: ${{ secrets.COZE_BOT_ID }}
-	        run: |
-	          echo "Starting to call Coze API for Bot..."
-	          # 使用 curl 发送 POST 请求，注意请求体里的参数是 bot_id
-	          curl --request POST 'https://api.coze.cn/v1/workflow/stream_run' \
-	          --header "Authorization: Bearer $API_TOKEN" \
-	          --header 'Content-Type: application/json' \
-	          --data '{
-	            "workflow_id": "'"$WORKFLOW_ID"'",
-	            "bot_id": "'"$BOT_ID"'",
-	            "parameters": {}
-	          }'
-	          echo "API call finished."
+# 给这个定时任务起个名字
+name: Trigger Coze Bot Workflow
+
+# 什么时候触发这个任务
+on:
+  schedule:
+    # 每小时的第0分钟运行一次
+    - cron: '0 * * * *'
+  # 允许手动在 Actions 页面点击运行，方便测试
+  workflow_dispatch:
+
+jobs:
+  call-coze-api:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run Coze Workflow via API
+        env:
+          # 从 GitHub Secrets 中读取凭证
+          API_TOKEN: ${{ secrets.COZE_API_TOKEN }}
+          WORKFLOW_ID: ${{ secrets.COZE_WORKFLOW_ID }}
+          # 注意：这里改成了 BOT_ID
+          BOT_ID: ${{ secrets.COZE_BOT_ID }}
+        run: |
+          echo "Starting to call Coze API for Bot..."
+          # 使用 curl 发送 POST 请求，注意请求体里的参数是 bot_id
+          curl --request POST 'https://api.coze.cn/v1/workflow/stream_run' \
+          --header "Authorization: Bearer $API_TOKEN" \
+          --header 'Content-Type: application/json' \
+          --data '{
+            "workflow_id": "'"$WORKFLOW_ID"'",
+            "bot_id": "'"$BOT_ID"'",
+            "parameters": {}
+          }'
+          echo "API call finished."
