@@ -77,16 +77,16 @@ jobs:
 
     echo "✅ 找到文件: $LATEST_TXT"
 
-    # 读取文件内容，提取每条新闻（假设格式为：标题\n来源\n链接\n---）
-    python -c "
+    # 创建临时 Python 脚本
+    cat > convert.py << 'EOF'
 import re
 import json
 import sys
 
-with open('$LATEST_TXT', 'r', encoding='utf-8') as f:
+with open(sys.argv[1], 'r', encoding='utf-8') as f:
     content = f.read()
 
-# 使用正则匹配每条新闻：标题、来源、链接
+# 使用正则匹配每条新闻：标题\n来源\n链接\n---
 pattern = r'(.*?)\n(.*?)\n(https?://[^\n]+)\n---'
 matches = re.findall(pattern, content, re.DOTALL)
 
@@ -100,7 +100,10 @@ for title, source, url in matches:
 
 # 输出为 JSON
 print(json.dumps(news_list, ensure_ascii=False, indent=2))
-" > hot_news.json
+EOF
+
+    # 执行转换脚本
+    python3 convert.py "$LATEST_TXT" > hot_news.json
 
     # 验证是否生成成功
     if [ ! -f "hot_news.json" ]; then
@@ -124,6 +127,7 @@ print(json.dumps(news_list, ensure_ascii=False, indent=2))
         }
       }' \
       https://api.github.com/gists
+      
       - name: Commit and push if changes
         run: |
           git config --global user.name 'GitHub Actions'
