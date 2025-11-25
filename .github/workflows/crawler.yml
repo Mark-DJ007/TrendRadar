@@ -64,7 +64,7 @@ jobs:
         env:
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
         run: |
-          # 查找最新的 .txt 文件（按修改时间倒序）
+          # 查找最新的 .txt 文件
           LATEST_TXT=$(find output -name "*.txt" -type f -print0 | xargs -0 ls -t 2>/dev/null | head -n 1)
           
           if [ -z "$LATEST_TXT" ] || [ ! -f "$LATEST_TXT" ]; then
@@ -98,16 +98,23 @@ jobs:
             }' \
             https://api.github.com/gists)
 
-          # 提取 Gist URL
-          GIST_URL=$(echo "$RESPONSE" | python3 -c "
+          # 创建临时 Python 脚本安全解析响应（避免 YAML 解析 try/except）
+          cat > /tmp/extract_gist_url.py << 'EOF'
 import sys, json
 try:
     data = json.load(sys.stdin)
-    print(data.get('html_url', '未知'))
-except:
-    print('上传失败，请检查 GIST_TOKEN 权限')
+    url = data.get("html_url")
+    if url:
+        print(url)
+    else:
+        print("未知")
+        sys.exit(1)
+except Exception as e:
+    print(f"上传失败: {e}")
     sys.exit(1)
-")
+EOF
+
+          GIST_URL=$(echo "$RESPONSE" | python3 /tmp/extract_gist_url.py)
           echo "✅ Gist 已上传: $GIST_URL"
 
       - name: Commit and push any changes (e.g., logs, outputs)
