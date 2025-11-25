@@ -2,18 +2,16 @@ name: Hot News Crawler
 
 on:
   schedule:
-    # 我们使用的是 github 官方提供的资源来进行的推送，而每个账号的资源是限额的，为了不被官方判定为滥用而面临封号的风险，不建议比半小时更低
-    - cron: "0 * * * *" # 每小时整点运行一次(实际有偏差) 或者 "*/30 * * * *" (每半小时执行一次) 或者 "*/30 0-14 * * *"(每天早上 8 点到晚上 10 点期间，每半小时运行一次)
-  workflow_dispatch:
+    - cron: '0 * * * *' # 每小时运行一次
+  push:
+    branches: [ master ]
 
-# 添加权限设置
 permissions:
   contents: write
 
 jobs:
   crawl:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -21,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
@@ -30,7 +28,7 @@ jobs:
 
       - name: Verify required files
         run: |
-          echo "🔍 检查必需的配置文件..."
+          echo "✅ 检查必需的配置文件..."
 
           if [ ! -f config/config.yaml ]; then
             echo "❌ 错误: config/config.yaml 文件不存在"
@@ -40,7 +38,7 @@ jobs:
 
           if [ ! -f config/frequency_words.txt ]; then
             echo "❌ 错误: config/frequency_words.txt 文件不存在"
-            echo "请参考项目文档创建频率词配置文件"
+            echo "请参考项目文档创建频率词表文件"
             exit 1
           fi
 
@@ -65,20 +63,20 @@ jobs:
           GITHUB_ACTIONS: true
         run: python main.py
 
-    - name: Convert txt to JSON and upload to Gist
-  run: |
-    # 查找最新的 .txt 文件（按时间排序）
-    LATEST_TXT=$(ls output/*/txt/*.txt | sort -r | head -1)
-    
-    if [ ! -f "$LATEST_TXT" ]; then
-      echo "❌ 未找到最新的 .txt 文件"
-      exit 1
-    fi
+      - name: Convert txt to JSON and upload to Gist
+        run: |
+          # 查找最新的 .txt 文件（按时间排序）
+          LATEST_TXT=$(ls output/*/txt/*.txt | sort -r | head -1)
+          
+          if [ ! -f "$LATEST_TXT" ]; then
+            echo "❌ 未找到最新的 .txt 文件"
+            exit 1
+          fi
 
-    echo "✅ 找到文件: $LATEST_TXT"
+          echo "✅ 找到文件: $LATEST_TXT"
 
-    # 创建临时 Python 脚本
-    cat > convert.py << 'EOF'
+          # 创建临时 Python 脚本
+          cat > convert.py << 'EOF'
 import re
 import json
 import sys
@@ -102,32 +100,32 @@ for title, source, url in matches:
 print(json.dumps(news_list, ensure_ascii=False, indent=2))
 EOF
 
-    # 执行转换脚本
-    python3 convert.py "$LATEST_TXT" > hot_news.json
+          # 执行转换脚本
+          python3 convert.py "$LATEST_TXT" > hot_news.json
 
-    # 验证是否生成成功
-    if [ ! -f "hot_news.json" ]; then
-      echo "❌ JSON 转换失败"
-      exit 1
-    fi
+          # 验证是否生成成功
+          if [ ! -f "hot_news.json" ]; then
+            echo "❌ JSON 转换失败"
+            exit 1
+          fi
 
-    # 获取 Gist Token
-    GIST_TOKEN=${{ secrets.GIST_TOKEN }}
+          # 获取 Gist Token
+          GIST_TOKEN=${{ secrets.GIST_TOKEN }}
 
-    # 上传到 Gist
-    curl -s -X POST \
-      -H "Authorization: token $GIST_TOKEN" \
-      -d '{
-        "description": "Auto-updated hot news from TrendRadar",
-        "public": true,
-        "files": {
-          "hot_news.json": {
-            "content": "$(cat hot_news.json)"
-          }
-        }
-      }' \
-      https://api.github.com/gists
-      
+          # 上传到 Gist
+          curl -s -X POST \
+            -H "Authorization: token $GIST_TOKEN" \
+            -d '{
+              "description": "Auto-updated hot news from TrendRadar",
+              "public": true,
+              "files": {
+                "hot_news.json": {
+                  "content": "$(cat hot_news.json)"
+                }
+              }
+            }' \
+            https://api.github.com/gists
+
       - name: Commit and push if changes
         run: |
           git config --global user.name 'GitHub Actions'
