@@ -1,4 +1,3 @@
-# scripts/convert_to_json.py
 import re
 import json
 import sys
