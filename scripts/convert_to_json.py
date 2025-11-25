@@ -4,7 +4,7 @@ import sys
 import os
 
 if len(sys.argv) != 2:
-    print("❌ 请提供 .txt 文件路径作为参数")
+    print("❌ 请提供 .txt 文件路径")
     sys.exit(1)
 
 txt_path = sys.argv[1]
@@ -15,7 +15,7 @@ if not os.path.isfile(txt_path):
 with open(txt_path, 'r', encoding='utf-8') as f:
     content = f.read()
 
-# 匹配格式：标题\n来源\n链接\n---
+# 修复正则：使用非贪婪匹配 + 修正 [^\n] 写法
 pattern = r'(.*?)\n(.*?)\n(https?://[^\n]+)\n---'
 matches = re.findall(pattern, content, re.DOTALL)
 
