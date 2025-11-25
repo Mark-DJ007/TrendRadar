@@ -2,7 +2,7 @@ name: Hot News Crawler
 
 on:
   schedule:
-    - cron: '0 * * * *' # 每小时运行一次
+    - cron: '0 * * * *'  # 每小时运行一次
   push:
     branches: [ master ]
 
@@ -24,24 +24,21 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
 
-      - name: Verify required files
+      - name: Verify required config files
         run: |
           echo "✅ 检查必需的配置文件..."
-
           if [ ! -f config/config.yaml ]; then
             echo "❌ 错误: config/config.yaml 文件不存在"
-            echo "请参考项目文档创建配置文件"
             exit 1
           fi
-
           if [ ! -f config/frequency_words.txt ]; then
             echo "❌ 错误: config/frequency_words.txt 文件不存在"
-            echo "请参考项目文档创建频率词表文件"
             exit 1
           fi
-
           echo "✅ 配置文件检查通过"
 
       - name: Run crawler
@@ -63,70 +60,57 @@ jobs:
           GITHUB_ACTIONS: true
         run: python main.py
 
-      - name: Convert txt to JSON and upload to Gist
+      - name: Convert latest txt to JSON and upload to Gist
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
         run: |
-          # 查找最新的 .txt 文件（按时间排序）
-          LATEST_TXT=$(ls output/*/txt/*.txt | sort -r | head -1)
+          # 查找最新的 .txt 文件（按修改时间倒序）
+          LATEST_TXT=$(find output -name "*.txt" -type f -print0 | xargs -0 ls -t 2>/dev/null | head -n 1)
           
-          if [ ! -f "$LATEST_TXT" ]; then
-            echo "❌ 未找到最新的 .txt 文件"
+          if [ -z "$LATEST_TXT" ] || [ ! -f "$LATEST_TXT" ]; then
+            echo "❌ 未找到任何 .txt 文件，请确认爬虫是否成功生成输出"
             exit 1
           fi
 
-          echo "✅ 找到文件: $LATEST_TXT"
+          echo "✅ 找到最新新闻文件: $LATEST_TXT"
 
-          # 创建临时 Python 脚本
-          cat > convert.py << 'EOF'
-import re
-import json
-import sys
+          # 使用外部脚本转换为 JSON
+          python scripts/convert_to_json.py "$LATEST_TXT" > hot_news.json
 
-with open(sys.argv[1], 'r', encoding='utf-8') as f:
-    content = f.read()
-
-# 使用正则匹配每条新闻：标题\n来源\n链接\n---
-pattern = r'(.*?)\n(.*?)\n(https?://[^\n]+)\n---'
-matches = re.findall(pattern, content, re.DOTALL)
-
-news_list = []
-for title, source, url in matches:
-    news_list.append({
-        'title': title.strip(),
-        'source': source.strip(),
-        'url': url.strip()
-    })
-
-# 输出为 JSON
-print(json.dumps(news_list, ensure_ascii=False, indent=2))
-EOF
-
-          # 执行转换脚本
-          python3 convert.py "$LATEST_TXT" > hot_news.json
-
-          # 验证是否生成成功
-          if [ ! -f "hot_news.json" ]; then
-            echo "❌ JSON 转换失败"
+          if [ ! -s hot_news.json ]; then
+            echo "❌ 转换失败：hot_news.json 为空或未生成"
             exit 1
           fi
 
-          # 获取 Gist Token
-          GIST_TOKEN=${{ secrets.GIST_TOKEN }}
+          echo "✅ JSON 转换成功"
 
           # 上传到 Gist
-          curl -s -X POST \
+          RESPONSE=$(curl -s -X POST \
             -H "Authorization: token $GIST_TOKEN" \
             -d '{
               "description": "Auto-updated hot news from TrendRadar",
               "public": true,
               "files": {
                 "hot_news.json": {
-                  "content": "$(cat hot_news.json)"
+                  "content": "'"$(cat hot_news.json)"'"
                 }
               }
             }' \
-            https://api.github.com/gists
+            https://api.github.com/gists)
 
-      - name: Commit and push if changes
+          # 提取 Gist URL
+          GIST_URL=$(echo "$RESPONSE" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    print(data.get('html_url', '未知'))
+except:
+    print('上传失败，请检查 GIST_TOKEN 权限')
+    sys.exit(1)
+")
+          echo "✅ Gist 已上传: $GIST_URL"
+
+      - name: Commit and push any changes (e.g., logs, outputs)
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
