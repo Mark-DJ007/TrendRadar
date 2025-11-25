@@ -28,15 +28,15 @@ jobs:
             pip install -r requirements.txt
           fi
 
-      - name: Verify required config files
+      - name: Verify config files
         run: |
           echo "✅ 检查必需的配置文件..."
           if [ ! -f config/config.yaml ]; then
-            echo "❌ 错误: config/config.yaml 文件不存在"
+            echo "❌ 错误: config/config.yaml 不存在"
             exit 1
           fi
           if [ ! -f config/frequency_words.txt ]; then
-            echo "❌ 错误: config/frequency_words.txt 文件不存在"
+            echo "❌ 错误: config/frequency_words.txt 不存在"
             exit 1
           fi
           echo "✅ 配置文件检查通过"
@@ -60,35 +60,31 @@ jobs:
           GITHUB_ACTIONS: true
         run: python main.py
 
-      - name: Convert latest txt to JSON and upload to Gist
+      - name: Convert to JSON & Upload to Gist
         env:
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
         run: |
-          # 查找最新的 .txt 文件
-          LATEST_TXT=$(find output -name "*.txt" -type f -print0 | xargs -0 ls -t 2>/dev/null | head -n 1)
-          
+          # 查找最新 .txt 文件
+          LATEST_TXT=$(find output -name "*.txt" -type f -print0 | xargs -0 ls -t | head -n 1)
           if [ -z "$LATEST_TXT" ] || [ ! -f "$LATEST_TXT" ]; then
-            echo "❌ 未找到任何 .txt 文件，请确认爬虫是否成功生成输出"
+            echo "❌ 未找到新闻文件，请检查爬虫输出"
             exit 1
           fi
+          echo "✅ 找到文件: $LATEST_TXT"
 
-          echo "✅ 找到最新新闻文件: $LATEST_TXT"
-
-          # 使用外部脚本转换为 JSON
+          # 转换为 JSON
           python scripts/convert_to_json.py "$LATEST_TXT" > hot_news.json
-
           if [ ! -s hot_news.json ]; then
-            echo "❌ 转换失败：hot_news.json 为空或未生成"
+            echo "❌ JSON 转换失败"
             exit 1
           fi
-
           echo "✅ JSON 转换成功"
 
-          # 上传到 Gist
-          RESPONSE=$(curl -s -X POST \
+          # 上传到 Gist (安全方式)
+          curl -s -X POST \
             -H "Authorization: token $GIST_TOKEN" \
             -d '{
-              "description": "Auto-updated hot news from TrendRadar",
+              "description": "TrendRadar Hot News",
               "public": true,
               "files": {
                 "hot_news.json": {
@@ -96,30 +92,15 @@ jobs:
                 }
               }
             }' \
-            https://api.github.com/gists)
+            https://api.github.com/gists > /tmp/gist_response.json
 
-          # 创建临时 Python 脚本安全解析响应（避免 YAML 解析 try/except）
-          cat > /tmp/extract_gist_url.py << 'EOF'
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    url = data.get("html_url")
-    if url:
-        print(url)
-    else:
-        print("未知")
-        sys.exit(1)
-except Exception as e:
-    print(f"上传失败: {e}")
-    sys.exit(1)
-EOF
-
-          GIST_URL=$(echo "$RESPONSE" | python3 /tmp/extract_gist_url.py)
+          # 提取 Gist URL (使用安全的 jq 工具)
+          GIST_URL=$(jq -r '.html_url' /tmp/gist_response.json)
           echo "✅ Gist 已上传: $GIST_URL"
 
-      - name: Commit and push any changes (e.g., logs, outputs)
+      - name: Commit changes
         run: |
           git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
           git add -A
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update by GitHub Actions at $(TZ=Asia/Shanghai date)" && git push)
+          git diff --quiet || git commit -m "Auto-update at $(date -u)"
+          git push
