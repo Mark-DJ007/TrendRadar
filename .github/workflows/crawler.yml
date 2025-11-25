@@ -65,7 +65,7 @@ jobs:
           GITHUB_ACTIONS: true
         run: python main.py
 
-      - name: Convert txt to JSON and upload to Gist
+    - name: Convert txt to JSON and upload to Gist
   run: |
     # 查找最新的 .txt 文件（按时间排序）
     LATEST_TXT=$(ls output/*/txt/*.txt | sort -r | head -1)
