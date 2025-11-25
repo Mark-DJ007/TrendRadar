@@ -65,6 +65,65 @@ jobs:
           GITHUB_ACTIONS: true
         run: python main.py
 
+      - name: Convert txt to JSON and upload to Gist
+  run: |
+    # 查找最新的 .txt 文件（按时间排序）
+    LATEST_TXT=$(ls output/*/txt/*.txt | sort -r | head -1)
+    
+    if [ ! -f "$LATEST_TXT" ]; then
+      echo "❌ 未找到最新的 .txt 文件"
+      exit 1
+    fi
+
+    echo "✅ 找到文件: $LATEST_TXT"
+
+    # 读取文件内容，提取每条新闻（假设格式为：标题\n来源\n链接\n---）
+    python -c "
+import re
+import json
+import sys
+
+with open('$LATEST_TXT', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+# 使用正则匹配每条新闻：标题、来源、链接
+pattern = r'(.*?)\n(.*?)\n(https?://[^\n]+)\n---'
+matches = re.findall(pattern, content, re.DOTALL)
+
+news_list = []
+for title, source, url in matches:
+    news_list.append({
+        'title': title.strip(),
+        'source': source.strip(),
+        'url': url.strip()
+    })
+
+# 输出为 JSON
+print(json.dumps(news_list, ensure_ascii=False, indent=2))
+" > hot_news.json
+
+    # 验证是否生成成功
+    if [ ! -f "hot_news.json" ]; then
+      echo "❌ JSON 转换失败"
+      exit 1
+    fi
+
+    # 获取 Gist Token
+    GIST_TOKEN=${{ secrets.GIST_TOKEN }}
+
+    # 上传到 Gist
+    curl -s -X POST \
+      -H "Authorization: token $GIST_TOKEN" \
+      -d '{
+        "description": "Auto-updated hot news from TrendRadar",
+        "public": true,
+        "files": {
+          "hot_news.json": {
+            "content": "$(cat hot_news.json)"
+          }
+        }
+      }' \
+      https://api.github.com/gists
       - name: Commit and push if changes
         run: |
           git config --global user.name 'GitHub Actions'
