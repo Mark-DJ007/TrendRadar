@@ -2,7 +2,7 @@ import json
 import sys
 import os
 import re
-
+ 
 def parse_txt_to_json(file_path: str):
     """
     解析 TrendRadar main.py 生成的TXT文件，转换为JSON列表。
@@ -21,12 +21,11 @@ def parse_txt_to_json(file_path: str):
         # ^\d+\.\s*     -> 行首的数字和点，如 "1. "
         # (.*?)         -> 非贪婪匹配新闻标题
         # \s*\[URL:(.*?)\] -> 匹配并捕获 [URL:...] 中的URL
-        # 后面的[MOBILE:...]我们不关心，所以不捕获
         line_pattern = re.compile(
             r'^\d+\.\s*(.*?)\s*\[URL:(.*?)\]'
-
+ 
         )
-
+ 
         for line in lines:
             # 我们只处理包含 "[URL:" 的行，这通常是新闻条目
             if "[URL:" in line:
@@ -46,7 +45,7 @@ def parse_txt_to_json(file_path: str):
     except Exception as e:
         print(f"解析文件时出错: {e}", file=sys.stderr)
         return []
-
+ 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("用法: python convert_to_json.py <path_to_txt_file>", file=sys.stderr)
@@ -64,3 +63,4 @@ if __name__ == "__main__":
     # 将结果以JSON格式打印到标准输出
     # GitHub Actions 工作流中的 `> hot_news.json` 会捕获这个输出
     print(json.dumps(output_json, ensure_ascii=False, indent=2))
+ 
