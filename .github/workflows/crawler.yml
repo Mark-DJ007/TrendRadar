@@ -62,12 +62,34 @@ jobs:
  
       - name: Diagnose: Print raw TXT content
         run: |
-          # --- 唯一目标：找到并打印 .txt 文件的原始内容 ---
-          LATEST_TXT=$(find output -name "*.txt" -type f -printf "%T@ %p\n" | sort -n | tail -1 | cut -d' ' -f2-)
-          if [ -z "$LATEST_TXT" ] || [ ! -f "$LATEST_TXT" ]; then
-            echo "❌ 未找到新闻文件"
+          echo "🔍 正在寻找最新的 .txt 文件..."
+          
+          # 使用内联的Python脚本来查找文件，100%稳健
+          LATEST_TXT=$(python -c '
+          import os
+          import sys
+          from pathlib import Path
+ 
+          try:
+              # 查找output目录下所有的.txt文件，并按修改时间排序，取最新的
+              txt_files = list(Path("output").glob("**/*.txt"))
+              if not txt_files:
+                  print("NOT_FOUND", file=sys.stderr)
+                  sys.exit(1)
+              
+              latest_file = max(txt_files, key=lambda p: p.stat().st_mtime)
+              print(latest_file)
+          except Exception as e:
+              print(f"ERROR: {e}", file=sys.stderr)
+              sys.exit(1)
+          ')
+          
+          # 检查Python脚本是否成功找到了文件
+          if [ ! -f "$LATEST_TXT" ]; then
+            echo "❌ 未能找到任何 .txt 文件"
             exit 1
           fi
+          
           echo "✅ 找到文件: $LATEST_TXT"
           echo "=========================================================="
           echo "🔍 以下是 .txt 文件的【原始内容】，请完整复制给我："
