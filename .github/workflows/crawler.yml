@@ -1,33 +1,33 @@
 name: Hot News Crawler
- 
+
 on:
   schedule:
     - cron: '0 * * * *'  # 每小时运行一次
   push:
     branches: [ master ]
- 
+
 permissions:
   contents: write
- 
+
 jobs:
   crawl:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
- 
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
- 
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           fi
- 
+
       - name: Verify config files
         run: |
           echo "✅ 检查必需的配置文件..."
@@ -40,7 +40,7 @@ jobs:
             exit 1
           fi
           echo "✅ 配置文件检查通过"
- 
+
       - name: Run crawler
         env:
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
@@ -59,7 +59,7 @@ jobs:
           NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
           GITHUB_ACTIONS: true
         run: python main.py
- 
+
       - name: Convert to JSON & Upload to Gist
         env:
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
@@ -72,18 +72,37 @@ jobs:
           fi
           echo "✅ 找到文件: $LATEST_TXT"
           
-          # --- 2. 转换为 JSON ---
+          # --- 2. 【关键调试】打印 .txt 文件的原始内容 ---
+          echo "======================================================"
+          echo "🔍 开始调试：以下为 .txt 文件的原始内容"
+          echo "======================================================"
+          cat "$LATEST_TXT"
+          echo "======================================================"
+          echo "🔍 .txt 文件内容打印完毕"
+          echo "======================================================"
+          
+          # --- 3. 转换为 JSON ---
           python scripts/convert_to_json.py "$LATEST_TXT" > hot_news.json
+          
+          # --- 4. 【关键检查】验证转换结果 ---
           if [ ! -s hot_news.json ]; then
-            echo "❌ JSON 转换失败或结果为空"
-            # 打印文件内容用于调试
+            echo "❌ JSON 转换失败或结果为空文件！"
+            echo "🔍 请检查上方的 .txt 文件原始内容，确认其格式是否符合预期。"
             cat hot_news.json
             exit 1
           fi
+          
+          # 检查JSON是否只是一个空数组 []
+          if [ "$(cat hot_news.json)" = "[]" ]; then
+            echo "❌ JSON 转换结果为空数组 []！这表示脚本未能从文件中解析出任何有效数据。"
+            echo "🔍 请检查上方的 .txt 文件原始内容，以及 `convert_to_json.py` 脚本的解析逻辑。"
+            exit 1
+          fi
+          
           echo "✅ JSON 转换成功，内容如下："
           cat hot_news.json
           
-          # --- 3. 创建 Gist API 的 payload 文件 (安全方式) ---
+          # --- 5. 创建 Gist API 的 payload 文件 (安全方式) ---
           jq --arg content "$(cat hot_news.json)" \
             '{
               "description": "TrendRadar Hot News - '"$(date -u)"'",
@@ -95,14 +114,14 @@ jobs:
               }
             }' > payload.json
           
-          # --- 4. 上传到 Gist ---
+          # --- 6. 上传到 Gist ---
           curl_response=$(curl -s -X POST \
             -H "Authorization: token $GIST_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             -d @payload.json \
             https://api.github.com/gists)
             
-          # --- 5. 检查上传结果 (关键！) ---
+          # --- 7. 检查上传结果 (关键！) ---
           if echo "$curl_response" | jq -e '.id' > /dev/null; then
             GIST_URL=$(echo "$curl_response" | jq -r '.html_url')
             echo "✅ Gist 上传成功: $GIST_URL"
@@ -111,7 +130,7 @@ jobs:
             echo "$curl_response"
             exit 1
           fi
- 
+
       - name: Commit changes
         run: |
           git config --global user.name 'GitHub Actions'
