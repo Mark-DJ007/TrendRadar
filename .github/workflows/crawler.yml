@@ -64,29 +64,12 @@ jobs:
         run: |
           echo "🔍 正在寻找最新的 .txt 文件..."
           
-          # 使用内联的Python脚本来查找文件，100%稳健
-          LATEST_TXT=$(python -c '
-          import os
-          import sys
-          from pathlib import Path
+          # 调用我们新创建的、独立的Python脚本来查找文件
+          LATEST_TXT=$(python scripts/find_latest_file.py)
  
-          try:
-              # 查找output目录下所有的.txt文件，并按修改时间排序，取最新的
-              txt_files = list(Path("output").glob("**/*.txt"))
-              if not txt_files:
-                  print("NOT_FOUND", file=sys.stderr)
-                  sys.exit(1)
-              
-              latest_file = max(txt_files, key=lambda p: p.stat().st_mtime)
-              print(latest_file)
-          except Exception as e:
-              print(f"ERROR: {e}", file=sys.stderr)
-              sys.exit(1)
-          ')
-          
-          # 检查Python脚本是否成功找到了文件
+          # 检查脚本是否成功找到了文件
           if [ ! -f "$LATEST_TXT" ]; then
-            echo "❌ 未能找到任何 .txt 文件"
+            echo "❌ 未能找到任何 .txt 文件，或者查找脚本出错。"
             exit 1
           fi
           
