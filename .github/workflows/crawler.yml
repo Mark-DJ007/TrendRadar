@@ -9,6 +9,7 @@ on:
  
 permissions:
   contents: write
+  gists: write
  
 jobs:
   crawl:
