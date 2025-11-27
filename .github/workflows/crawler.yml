@@ -2,129 +2,127 @@ name: Hot News Crawler
 
 on:
   schedule:
-    # 每小时运行一次
+    # 使用 '0 * * * *' 表示每小时运行一次
     - cron: '0 * * * *'
   push:
     branches: [ master ]
 
+# 移除了无效的 'gists: write' 权限
 permissions:
   contents: write
-  gists: write
 
 jobs:
   crawl:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-      
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then
-          pip install -r requirements.txt
-        fi
-        
-    - name: Verify config files
-      run: |
-        echo "检查必需的配置文件..."
-        if [ ! -f config/config.yaml ]; then
-          echo "❌ 错误: config/config.yaml 不存在"
-          exit 1
-        fi
-        if [ ! -f config/frequency_words.txt ]; then
-          echo "❌ 错误: config/frequency_words.txt 不存在"
-          exit 1
-        fi
-        echo "✅ 配置文件检查通过"
-        
-    - name: Run crawler
-      env:
-        FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        DINGTALK_WEBHOOK_URL: ${{ secrets.DINGTALK_WEBHOOK_URL }}
-        WEWORK_WEBHOOK_URL: ${{ secrets.WEWORK_WEBHOOK_URL }}
-        HEWORK_MSG_TYPE: ${{ secrets.HEWORK_MSG_TYPE }}
-        EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        EMAIL_TO: ${{ secrets.EMAIL_TO }}
-        EMAIL_SMTP_SERVER: ${{ secrets.EMAIL_SMTP_SERVER }}
-        EMAIL_SMTP_PORT: ${{ secrets.EMAIL_SMTP_PORT }}
-        NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-        NTFY_SERVER_URL: ${{ secrets.NTFY_SERVER_URL }}
-        NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
-        GITHUB_ACTIONS: true
-      run: python main.py
-      
-    - name: Send to WeWork
-      env:
-        WEWORK_WEBHOOK_URL: ${{ secrets.WEWORK_WEBHOOK_URL }}
-      run: |
-        LATEST_TXT=$(python scripts/find_latest_file.py)
-        if [ -f "$LATEST_TXT" ]; then
-          python scripts/convert_to_json.py "$LATEST_TXT" > hot_news.json
-          echo "发送热点新闻到企业微信..."
-          curl -X POST -H "Content-Type: application/json" \
-            -d "$(jq -r '.[] | "📰 \(.title)\n\(.url)"' hot_news.json | jq -R -s '{"msgtype": "text", "text": {"content": .}}')" \
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+      - name: Verify config files
+        run: |
+          echo "检查必需的配置文件..."
+          if [ ! -f config/config.yaml ]; then
+            echo "X 错误: config/config.yaml 不存在"
+            exit 1
+          fi
+          if [ ! -f config/frequency_words.txt ]; then
+            echo "X 错误: config/frequency_words.txt 不存在"
+            exit 1
+          fi
+          echo "✓ 配置文件检查通过"
+
+      - name: Run crawler
+        env:
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DINGTALK_WEBHOOK_URL: ${{ secrets.DINGTALK_WEBHOOK_URL }}
+          WEWORK_WEBHOOK_URL: ${{ secrets.WEWORK_WEBHOOK_URL }}
+          HEWORK_MSG_TYPE: ${{ secrets.HEWORK_MSG_TYPE }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_SMTP_SERVER: ${{ secrets.EMAIL_SMTP_SERVER }}
+          EMAIL_SMTP_PORT: ${{ secrets.EMAIL_SMTP_PORT }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_SERVER_URL: ${{ secrets.NTFY_SERVER_URL }}
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+          GITHUB_ACTIONS: true
+        run: python main.py
+
+      - name: Send to WeWork
+        env:
+          WEWORK_WEBHOOK_URL: ${{ secrets.WEWORK_WEBHOOK_URL }}
+        run: |
+          LATEST_TXT=$(python scripts/find_latest_file.py)
+          if [ -f "$LATEST_TXT" ]; then
+            python scripts/convert_to_json.py "$LATEST_TXT" > hot_news.json
+            echo "发送热点新闻到企业微信..."
+            curl -X POST -H "Content-Type: application/json" \
+            -d "$(jq -r '.[]|" \(.title)\n\(.url)"' hot_news.json | jq -R -s '{"msgtype":"text","text":{"content":.}}')" \
             "$WEWORK_WEBHOOK_URL"
-        else
-          echo "未找到TXT文件，跳过企业微信推送"
-        fi
-        
-    - name: Upload to Gist
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        LATEST_TXT=$(python scripts/find_latest_file.py)
-        if [ -f "$LATEST_TXT" ]; then
-          python scripts/convert_to_json.py "$LATEST_TXT" > hot_news.json
-          
-          # 使用 GitHub API 创建 Gist
-          GIST_DATA=$(jq -n \
+          else
+            echo "未找到TXT文件, 跳过企业微信推送"
+          fi
+
+      - name: Upload to Gist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST_TXT=$(python scripts/find_latest_file.py)
+          if [ -f "$LATEST_TXT" ]; then
+            python scripts/convert_to_json.py "$LATEST_TXT" > hot_news.json
+
+            # 使用GitHub API创建Gist
+            GIST_DATA=$(jq -n \
             --arg description "热点新闻 $(date '+%Y-%m-%d %H:%M:%S')" \
             --arg content "$(cat hot_news.json)" \
             '{
               description: $description,
               public: true,
-              files: {"hot_news.json": {content: $content}}
+              files: {"hot_news.json":{content:$content}}
             }')
-          
-          echo "准备创建Gist，发送的数据是："
-          echo "$GIST_DATA"
-          
-          echo "正在请求GitHub API..."
-          GIST_RESPONSE=$(curl -s -X POST \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
+
+            echo "准备创建Gist, 发送的数据是:"
+            echo "$GIST_DATA"
+            GIST_RESPONSE=$(curl \
+            -H "Authorization:token $GITHUB_TOKEN" \
+            -H "Accept:application/vnd.github.v3+json" \
             https://api.github.com/gists \
             -d "$GIST_DATA")
             
-          echo "------------------- GitHub API 的完整返回内容 -------------------"
-          echo "$GIST_RESPONSE"
-          echo "---------------------------------------------------------------"
-          
-          GIST_URL=$(echo "$GIST_RESPONSE" | jq -r '.html_url')
-          if [ "$GIST_URL" != "null" ] && [ -n "$GIST_URL" ]; then
-            echo "✅ Gist已创建: $GIST_URL"
-            echo "$GIST_URL" > latest_gist_url.txt
+            echo "GitHub API的完整返回内容"
+            echo "$GIST_RESPONSE"
+            echo
+            
+            GIST_URL=$(echo "$GIST_RESPONSE" | jq -r ".html_url")
+            if [ "$GIST_URL" != "null" ] && [ -n "$GIST_URL" ]; then
+              echo "Gist已创建: $GIST_URL"
+              echo "$GIST_URL" > latest_gist_url.txt
+            else
+              echo "Gist创建失败, 请查看上方的API返回内容寻找原因。"
+            fi
           else
-            echo "❌ Gist创建失败，请查看上方的API返回内容寻找原因。"
+            echo "未找到TXT文件, 跳过Gist上传"
           fi
-        else
-          echo "未找到TXT文件，跳过Gist上传"
-        fi
-        
-    - name: Commit changes
-      run: |
-        git config --global user.name 'GitHub Actions'
-        git config --global user.email 'actions@github.com'
-        git add -A
-        git diff --quiet || git commit -m "Auto-update at $(date -u)"
-        git push
+
+      - name: Commit changes
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add -A
+          git diff --quiet || git commit -m "Auto-update at $(date -u)"
+          git push
