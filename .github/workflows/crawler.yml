@@ -95,18 +95,27 @@ jobs:
               files: {"hot_news.json": {content: $content}}
             }')
           
-          echo "创建Gist..."
+          echo "准备创建Gist，发送的数据是："
+          echo "$GIST_DATA"
+          
+          echo "正在请求GitHub API..."
           GIST_RESPONSE=$(curl -s -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/gists \
             -d "$GIST_DATA")
+            
+          echo "------------------- GitHub API 的完整返回内容 -------------------"
+          echo "$GIST_RESPONSE"
+          echo "---------------------------------------------------------------"
           
           GIST_URL=$(echo "$GIST_RESPONSE" | jq -r '.html_url')
-          echo "✅ Gist已创建: $GIST_URL"
-          
-          # 保存Gist URL到文件，供后续使用
-          echo "$GIST_URL" > latest_gist_url.txt
+          if [ "$GIST_URL" != "null" ] && [ -n "$GIST_URL" ]; then
+            echo "✅ Gist已创建: $GIST_URL"
+            echo "$GIST_URL" > latest_gist_url.txt
+          else
+            echo "❌ Gist创建失败，请查看上方的API返回内容寻找原因。"
+          fi
         else
           echo "未找到TXT文件，跳过Gist上传"
         fi
