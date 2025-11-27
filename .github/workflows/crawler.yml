@@ -1,15 +1,15 @@
 name: Hot News Crawler
-
+ 
 on:
   schedule:
     # 每小时运行一次
     - cron: '0 * * * *'
   push:
-    branches: [master]
-
+    branches: [ master ]
+ 
 permissions:
   contents: write
-
+ 
 jobs:
   crawl:
     runs-on: ubuntu-latest
@@ -109,20 +109,6 @@ jobs:
           echo "$GIST_URL" > latest_gist_url.txt
         else
           echo "未找到TXT文件，跳过Gist上传"
-        fi
-        
-    - name: Diagnose: Print raw TXT content
-      run: |
-        echo "正在寻找最新的.txt文件..."
-        LATEST_TXT=$(python scripts/find_latest_file.py)
-        if [ -f "$LATEST_TXT" ]; then
-          echo "找到文件: $LATEST_TXT"
-          echo "==================== TXT文件原始内容 ===================="
-          cat "$LATEST_TXT"
-          echo "=========================================================="
-        else
-          echo "未能找到任何.txt文件，或者查找脚本出错。"
-          exit 1
         fi
         
     - name: Commit changes
